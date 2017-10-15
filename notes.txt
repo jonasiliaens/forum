@@ -1,0 +1,24 @@
+# Forum
+
+1. Thread
+2. Reply
+3. User
+
+A. Thread is created by a user
+B. A reply belongs to a thread and belongs to a user.
+
+
+#	Mijn nota's:
+
+Als een test faalt zonder duidelijke foutboodschap maar met een hele resem html in de foutboodschap moet Exceptionhandeling uitzetten door volgende regel toe te voegen bovenaan de test:
+$this->withoutExceptionHandling();
+Dit is tevens nodig als je een test schrijft met een assertion die een Exception verwacht: ->assertSeeException('naamexception')
+
+{{ str_plural('reply', $thread->replies_count) }} 
+Dit is een functie om een woord in het enkelvoud of meervoud te gebruiken al naar gelang het aantal resultaten (in dit geval de reslutaten van $thread->replies_count)
+
+https://github.com/barryvdh/laravel-debugbar
+Deze tool is handig om te zien hoeveel queries je maakt per page load, dit is zeker handig om n+1 problemen op te sporen, installeren via composer require en vanaf Laravel 5.5 hoef je verder niets meer te doen
+
+In de AppServiceProvider heb ik Carbon::setLocale('nl'); toegevoegd aan de boot method zodat in de views de carbon created_at->diffForHumans() in het nederlands staan ipv engels
+
