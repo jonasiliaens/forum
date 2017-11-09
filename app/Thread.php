@@ -16,10 +16,12 @@ class Thread extends Model
     {
         parent::boot();
 
-        static::addGlobalScope('replyCount', function ($builder) {
-            $builder->withCount('replies');
-        });
+        // static::addGlobalScope('replyCount', function ($builder) {
+        //     $builder->withCount('replies');
+        // });
         //de bedoeling van deze globale querie scope is om bij elke sql querie voor een thread, een attribuut mee te geven dat het aantal replies telt, in dit voorbeeld kan in de view {{ $thread->replies()->count() }} (wat opnieuw een querie uitvoert) vervangen worden door: {{ $thread->replies_count }} waarbij géén nieuwe querie dient te gebeuren.
+        //
+        //In episode 39 echter wordt deze global querie verwijderd en vervangen door een kolom in de database
 
         static::deleting(function ($thread) {
             $thread->replies->each->delete();
@@ -47,9 +49,15 @@ class Thread extends Model
         return $this->belongsTo(Channel::class);
     }
 
+    /**
+     * Add a reply tot the thread.
+     *
+     * @param array $reply
+     * @return $reply
+     */
     public function addReply($reply)
     {
-        $this->replies()->create($reply);
+        return $this->replies()->create($reply);
     }
 
     public function scopeFilter($query, $filters)
