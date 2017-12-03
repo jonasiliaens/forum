@@ -4,18 +4,24 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\DatabaseNotification;
 
 class NotificationsTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function setUp()
+    {
+        parent::setUp();
+
+        //In elke test heb ik een authenticated user
+        $this->signIn();
+    }
+
     /** @test */
     public function a_notification_is_prepared_when_a_subscribed_thread_receives_a_new_reply_that_is_not_by_the_current_user()
     {
-        //Als ik een authenticated gebruiker heb
-        $this->signIn();
-
-        //En een thread waarop de gebruiker zich subscribed
+        //En een thread waarop de user zich subscribed
         $thread = create('App\Thread')->subscribe();
 
         //zijn er geen notificaties
@@ -27,7 +33,7 @@ class NotificationsTest extends TestCase
             'body' => 'Some reply here'
         ]);
 
-        //mag de gebruiker geen notificatie krijgen van zijn eigen reply.
+        //mag de user geen notificatie krijgen van zijn eigen reply.
         $this->assertCount(0, auth()->user()->fresh()->notifications);
 
         //Maar als een andere user een reply geeft op de thread...
@@ -36,58 +42,35 @@ class NotificationsTest extends TestCase
             'body' => 'Some reply here'
         ]);
 
-        //moet de gebruiker wel een notificatie krijgen.
+        //moet de user wel een notificatie krijgen.
         $this->assertCount(1, auth()->user()->fresh()->notifications);
     }
 
     /** @test */
     public function a_user_can_fetch_their_unread_notifications()
     {
-        //Als ik een authenticated gebruiker heb
-        $this->signIn();
+        //Er is een authenticated user (zie parent::setup)
+        //En deze heeft een notificatie
+        create(DatabaseNotification::class);
 
-        //Die zich subscribed op een thread
-        $thread = create('App\Thread')->subscribe();
-
-        //En als een andere gebruiker een reply geeft op de thread...
-        $thread->addReply([
-            'user_id' => create('App\User')->id,
-            'body' => 'Some reply here'
-        ]);
-
-        $user = auth()->user();
-
-        //En de gebruiker zijn notificaties opvraagt
-        $response = $this->getJson("/profiles/{$user->name}/notifications")->json();
-
-        //Dan moet er 1 instaan
-        $this->assertCount(1, $response);
+        //Als de user dan zijn notificaties opvraagt, moet er 1 weergegeven worden
+        $this->assertCount(1, $this->getJson('/profiles/' . auth()->user()->name . '/notifications')->json());
     }
 
     /** @test */
     public function a_user_can_mark_a_notification_as_read()
     {
-        //Als ik een authenticated gebruiker heb
-        $this->signIn();
-
-        //Die zich subscribed op een thread
-        $thread = create('App\Thread')->subscribe();
-
-        //En als een gebruiker een reply geeft op de thread...
-        $thread->addReply([
-            'user_id' => create('App\User')->id,
-            'body' => 'Some reply here'
-        ]);
+        //Er is een authenticated user (zie parent::setup)
+        //En deze heeft een notificatie
+        create(DatabaseNotification::class);
 
         $user = auth()->user();
 
         //Dan moet er tenminste 1 ongelezen notoficatie zijn
         $this->assertCount(1, $user->unreadNotifications);
 
-        $notificationId = $user->unreadNotifications->first()->id;
-
         //En als de notificatie dan als gelezen wordt gemarkeerd
-        $this->delete("/profiles/{$user->name}/notifications/{$notificationId}");
+        $this->delete("/profiles/{$user->name}/notifications/" . $user->unreadNotifications->first()->id);
 
         //Mag deze niet meer voorkomen in de ongelezen notificaties
         $this->assertCount(0, $user->fresh()->unreadNotifications);
