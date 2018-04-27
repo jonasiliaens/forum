@@ -54,7 +54,10 @@ class NotificationsTest extends TestCase
         create(DatabaseNotification::class);
 
         //Als de user dan zijn notificaties opvraagt, moet er 1 weergegeven worden
-        $this->assertCount(1, $this->getJson('/profiles/' . auth()->user()->name . '/notifications')->json());
+        $this->assertCount(
+            1,
+            $this->getJson('/profiles/' . auth()->user()->name . '/notifications')->json()
+        );
     }
 
     /** @test */
